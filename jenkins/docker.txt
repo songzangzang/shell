@@ -1,0 +1,29 @@
+#定义变量
+API_NAME="demo-0.0.1-SNAPSHOT.jar"
+API_VERSION="1.0.0"
+PATH="172.16.20.233"
+API_PORT=58080
+IMAGE_NAME="127.0.0.1:50000/com.example/${API_NAME}-${BRANCH_NAME}:${BUILD_NUMBER}"
+CONTAINER_NAME=$API_NAME-$API_VERSION
+
+#进入target目录并复制Dockerfile文件
+cd ${WORKSPACE}/target
+/bin/cp ./classes/Dockerfile .
+
+#构建Docker镜像
+docker:docker build -t ${IMAGE_NAME} .
+
+#推送Docker镜像
+docker:docker push ${IMAGE_NAME}
+
+#删除Docker容器
+cid=$(docker ps | grep "${CONTAINER_NAME}" | awk '{print $1}')
+if[ "cid" != "" ]; then
+    docker rm -f $cid
+fi
+
+#启动Docker容器
+docker:docker run -d -p ${API_PORT}:8080 --name ${CONTAINER_NAME} ${IMAGE_NAME}
+
+#删除Dockerfile文件
+rm -f Dockerfile
